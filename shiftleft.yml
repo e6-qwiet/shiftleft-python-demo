@@ -30,7 +30,8 @@ build_rules:
       - high
     threshold: 0
     options:
-      num_findings: 10 # Return 10 container findings
+      num_findings: 10 
+# Return 10 container findings
 # The above rule is perhaps the most common in that it
 # is designed to be used with Pull Request and to block
 # new vulns from being introduced that aren't already on
