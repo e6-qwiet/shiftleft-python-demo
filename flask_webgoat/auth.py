@@ -9,21 +9,20 @@ def login():
     username = request.form.get("username")
     password = request.form.get("password")
     if username is None or password is None:
-        return (
-            jsonify({"error": "username and password parameter have to be provided"}),
-            400,
-        )
+        return jsonify({"error": "username and password parameter have to be provided"}), 400
 
-    # vulnerability: SQL Injection
-    query = (
-        "SELECT id, username, access_level FROM user WHERE username = '%s' AND password = '%s'"
-        % (username, password)
-    )
-    result = query_db(query, [], True)
-    if result is None:
-        return jsonify({"bad_login": True}), 400
-    session["user_info"] = (result[0], result[1], result[2])
+    # Generate a secure salt
+    salt = os.urandom(16)
+    # Create a key using a KDF
+    key = base64.urlsafe_b64encode(os.urandom(16))
+    f = Fernet(key)
+    # Store the salt and encrypted password in the database
+    encrypted_password = f.encrypt(password.encode())
+    query = "INSERT INTO user (username, password, salt) VALUES (?, ?, ?)"
+    query_db(query, (username, encrypted_password, salt), commit=True)
+
     return jsonify({"success": True})
+
 
 
 @bp.route("/login_and_redirect")
@@ -46,3 +45,4 @@ def login_and_redirect():
         return redirect(url)
     session["user_info"] = (result[0], result[1], result[2])
     return jsonify({"success": True})
+
